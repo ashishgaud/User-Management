@@ -1,0 +1,152 @@
+USE [UserManagementDB]
+GO
+/****** Object:  StoredProcedure [dbo].[UserManagementOperations]    Script Date: 23-11-2024 16:40:28 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER PROCEDURE [dbo].[UserManagementOperations]
+    @Action NVARCHAR(50),
+    @Id INT = NULL,
+    @Name NVARCHAR(100) = NULL,
+    @Email NVARCHAR(100) = NULL,
+    @Password NVARCHAR(200) = NULL,
+    @Mobile NVARCHAR(15) = NULL,
+    @Gender NVARCHAR(10) = NULL,
+    @UserType NVARCHAR(50) = NULL,
+    @ProfilePicture NVARCHAR(255) = NULL,
+	@Newpassword Varchar(200)=NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF @Action = 'ChangePassword'
+    BEGIN
+        UPDATE Users
+        SET Password = Password
+        WHERE Id = @Id;
+    END
+	ELSE IF @Action='ChangePassword2'
+	BEGIN
+	SET NOCOUNT OFF;
+	UPDATE Users SET Password = @NewPassword WHERE Id = @Id;
+END;
+
+    ELSE IF @Action = 'GetPassword'
+    BEGIN
+        SELECT Password
+        FROM Users
+        WHERE Id = @Id;
+    END
+
+    ELSE IF @Action = 'GetOtherUsers'
+    BEGIN
+        SELECT Name, Email, Mobile, ProfilePicture
+        FROM Users
+        WHERE UserType = @UserType AND Id <> @Id;
+    END
+
+    ELSE IF @Action = 'GetUserDetailsById'
+    BEGIN
+        SELECT Name, Email, Mobile, Gender, UserType, ProfilePicture
+        FROM Users
+        WHERE Id = @Id;
+    END
+
+    ELSE IF @Action = 'Login'
+    BEGIN
+        SELECT Id, UserType, Password
+    FROM Users
+    WHERE Email = @Email;
+    END
+
+    ELSE IF @Action = 'RegisterUser'
+    BEGIN
+        IF EXISTS (SELECT 1 FROM Users WHERE Email = @Email)
+        BEGIN
+            SELECT -1;
+            RETURN;
+        END
+
+        INSERT INTO Users (Name, Email, Password, Mobile, Gender, UserType, ProfilePicture)
+        VALUES (@Name, @Email, @Password, @Mobile, @Gender, @UserType, @ProfilePicture);
+
+        SELECT 1;
+    END
+
+    ELSE IF @Action = 'LoadUser'
+    BEGIN
+        SELECT Name, Email, Mobile, Gender, UserType, ProfilePicture
+        FROM Users
+        WHERE Id = @Id;
+    END
+
+    ELSE IF @Action = 'LoadUsersEdit'
+    BEGIN
+        SELECT Id, Name, Email, Mobile, Gender, UserType
+        FROM Users
+        WHERE Id = @Id;
+    END
+
+    ELSE IF @Action = 'UpdateUserDetails'
+    BEGIN
+        UPDATE Users
+        SET Name = @Name,                                        
+
+            Mobile = @Mobile,
+            Gender = @Gender,
+            UserType = @UserType
+        WHERE Id = @Id;
+    END
+
+    ELSE IF @Action = 'ForgotPassword'
+    BEGIN
+        SELECT Password
+        FROM Users
+        WHERE Email = @Email;
+    END
+	ELSE IF @Action='UpdateUserProfile1'
+	BEGIN
+	SELECT Name, Email, Mobile, Gender, UserType,ProfilePicture  FROM Users WHERE Id = @Id;
+	END
+    ELSE IF @Action = 'UpdateUserProfile'
+    BEGIN
+	SET NOCOUNT OFF;
+        UPDATE Users
+        SET Name = @Name,                       
+            Email = @Email,                            
+            Mobile = @Mobile,
+            Gender = @Gender,
+            UserType = @UserType,
+            ProfilePicture = @ProfilePicture
+
+        WHERE Id = @Id;
+    END
+
+    ELSE IF @Action = 'UpdateProfilePicture'
+    BEGIN
+        UPDATE Users
+        SET ProfilePicture = @ProfilePicture
+        WHERE Id = @Id;
+    END
+
+    ELSE IF @Action = 'BindGridUserList'
+    BEGIN
+        SELECT *
+        FROM Users
+        WHERE UserType != 'Admin';
+    END
+
+    ELSE IF @Action = 'DeleteUser'
+    BEGIN
+        DELETE FROM Users
+        WHERE Id = @Id;
+    END
+	ElSE IF @Action ='GetUserList'
+	BEGIN
+    SELECT Name, Email, Mobile, Gender, UserType 
+    FROM Users 
+    WHERE UserType = @UserType;
+  END;
+END;
+
